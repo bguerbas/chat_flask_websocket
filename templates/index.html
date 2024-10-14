@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat em Tempo Real Moderno</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <div class="chat-container">
+        <div class="chat-box" id="messages"></div>
+        <form id="form" class="input-form" action="">
+            <input id="input" class="chat-input" autocomplete="off" placeholder="Digite sua mensagem aqui..." />
+            <button class="send-btn">Enviar</button>
+        </form>
+        <button id="end-chat" class="end-btn">Encerrar Chat</button> <!-- Botão para encerrar chat -->
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/3.0.4/socket.io.js"></script>
+    <script>
+        var socket = io.connect('http://' + document.domain + ':' + location.port);
+
+        socket.on('connect', function() {
+            console.log('Conectado ao servidor via WebSocket');
+        });
+
+        // Recebe mensagem e adiciona ao chat
+        socket.on('message', function(msg) {
+            var messages = document.getElementById('messages');
+            var newMessage = document.createElement('div');
+
+            // Verificar se a mensagem é do bot
+            if (msg.includes('ChatBot')) {
+                newMessage.classList.add('message', 'bot-message'); // Mensagem do bot
+            } else {
+                newMessage.classList.add('message', 'user-message'); // Mensagem do usuário
+            }
+
+            newMessage.textContent = msg;
+            messages.appendChild(newMessage);
+            messages.scrollTop = messages.scrollHeight;  // Auto-scroll
+        });
+
+        // Envio de mensagem
+        document.getElementById('form').onsubmit = function() {
+            var input = document.getElementById('input');
+            socket.emit('message', input.value);
+            input.value = '';
+            return false;
+        };
+
+        // Função para encerrar o chat
+        document.getElementById('end-chat').onclick = function() {
+            socket.disconnect();  // Desconecta o WebSocket
+            document.getElementById('messages').innerHTML = '';
+        };
+    </script>
+</body>
+</html>
